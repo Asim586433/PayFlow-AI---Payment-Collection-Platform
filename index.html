@@ -79,10 +79,13 @@
             color: var(--dark);
             font-weight: 500;
             transition: color 0.3s;
+            padding: 5px 10px;
+            border-radius: 4px;
         }
         
         nav a:hover, nav a.active {
             color: var(--primary);
+            background-color: rgba(67, 97, 238, 0.1);
         }
         
         .user-actions {
@@ -118,6 +121,24 @@
         .btn-outline:hover {
             background-color: var(--primary);
             color: white;
+        }
+        
+        .btn-success {
+            background-color: var(--success);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background-color: #3ab0d5;
+        }
+        
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background-color: #e01a6f;
         }
         
         /* Dashboard Styles */
@@ -173,6 +194,19 @@
         .stat-label {
             color: var(--gray);
             font-size: 0.9rem;
+        }
+        
+        .stat-change {
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        
+        .positive {
+            color: var(--success);
+        }
+        
+        .negative {
+            color: var(--danger);
         }
         
         .features-grid {
@@ -276,6 +310,7 @@
             display: flex;
             gap: 15px;
             margin-bottom: 20px;
+            align-items: center;
         }
         
         .agent-status {
@@ -529,6 +564,39 @@
             font-size: 0.9rem;
         }
         
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 1000;
+            transform: translateX(150%);
+            transition: transform 0.3s ease;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification.success {
+            border-left: 4px solid var(--success);
+        }
+        
+        .notification.error {
+            border-left: 4px solid var(--danger);
+        }
+        
+        .notification.info {
+            border-left: 4px solid var(--primary);
+        }
+        
         /* Responsive Design */
         @media (max-width: 768px) {
             .header-content {
@@ -538,6 +606,8 @@
             
             nav ul {
                 gap: 15px;
+                flex-wrap: wrap;
+                justify-content: center;
             }
             
             .dashboard-header {
@@ -552,11 +622,28 @@
             
             .agent-controls {
                 flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .invoice-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .invoice-item .btn {
+                align-self: stretch;
             }
         }
     </style>
 </head>
 <body>
+    <!-- Notification System -->
+    <div id="notification" class="notification">
+        <i class="fas fa-check-circle"></i>
+        <span id="notification-text">Operation completed successfully!</span>
+    </div>
+
     <!-- Header -->
     <header>
         <div class="container">
@@ -567,17 +654,22 @@
                 </div>
                 <nav>
                     <ul>
-                        <li><a href="#" class="active">Dashboard</a></li>
-                        <li><a href="#">CRM Integrations</a></li>
-                        <li><a href="#">Voice Agents</a></li>
-                        <li><a href="#">Payment Portal</a></li>
-                        <li><a href="#">Campaigns</a></li>
-                        <li><a href="#">Analytics</a></li>
+                        <li><a href="#" class="active nav-link" data-section="dashboard">Dashboard</a></li>
+                        <li><a href="#" class="nav-link" data-section="crm">CRM Integrations</a></li>
+                        <li><a href="#" class="nav-link" data-section="voice">Voice Agents</a></li>
+                        <li><a href="#" class="nav-link" data-section="payment">Payment Portal</a></li>
+                        <li><a href="#" class="nav-link" data-section="campaigns">Campaigns</a></li>
+                        <li><a href="#" class="nav-link" data-section="analytics">Analytics</a></li>
                     </ul>
                 </nav>
                 <div class="user-actions">
-                    <button class="btn btn-outline"><i class="fas fa-bell"></i></button>
-                    <button class="btn btn-outline"><i class="fas fa-cog"></i></button>
+                    <button class="btn btn-outline" id="notifications-btn">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge">3</span>
+                    </button>
+                    <button class="btn btn-outline" id="settings-btn">
+                        <i class="fas fa-cog"></i>
+                    </button>
                     <div class="user-avatar">
                         <i class="fas fa-user-circle" style="font-size: 1.8rem; color: var(--primary);"></i>
                     </div>
@@ -591,7 +683,9 @@
         <div class="container">
             <div class="dashboard-header">
                 <h1 class="dashboard-title">AI Payment Collection Dashboard</h1>
-                <button class="btn btn-primary"><i class="fas fa-plus"></i> New Campaign</button>
+                <button class="btn btn-primary" id="new-campaign-btn">
+                    <i class="fas fa-plus"></i> New Campaign
+                </button>
             </div>
             
             <!-- Stats Overview -->
@@ -626,7 +720,7 @@
                     </div>
                     <h3 class="feature-title">CRM Integration</h3>
                     <p class="feature-description">Connect with HubSpot and Salesforce to automatically sync leads and customers with overdue payments.</p>
-                    <button class="btn btn-outline">Configure</button>
+                    <button class="btn btn-outline configure-crm-btn">Configure</button>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">
@@ -634,7 +728,7 @@
                     </div>
                     <h3 class="feature-title">AI Voice Agents</h3>
                     <p class="feature-description">Automate payment collection with AI-powered voice agents that can negotiate and send payment links.</p>
-                    <button class="btn btn-outline">Manage Agents</button>
+                    <button class="btn btn-outline manage-agents-btn">Manage Agents</button>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">
@@ -642,12 +736,12 @@
                     </div>
                     <h3 class="feature-title">Payment Portal</h3>
                     <p class="feature-description">Provide customers with easy payment options through secure, mobile-friendly payment pages.</p>
-                    <button class="btn btn-outline">View Portal</button>
+                    <button class="btn btn-outline view-portal-btn">View Portal</button>
                 </div>
             </div>
             
             <!-- CRM Integration Section -->
-            <div class="crm-section">
+            <div class="crm-section" id="crm-section">
                 <h2 class="section-title"><i class="fas fa-plug"></i> CRM Integrations</h2>
                 <p>Connect your CRM to automatically sync customers with overdue payments and enable AI outreach campaigns.</p>
                 
@@ -658,7 +752,7 @@
                         </div>
                         <h3>HubSpot</h3>
                         <p>Connect your HubSpot account</p>
-                        <button class="btn btn-outline" style="margin-top: 10px;">Connect</button>
+                        <button class="btn btn-outline hubspot-connect-btn" style="margin-top: 10px;">Connect</button>
                     </div>
                     <div class="crm-option" id="salesforce-connect">
                         <div class="crm-logo salesforce">
@@ -666,7 +760,7 @@
                         </div>
                         <h3>Salesforce</h3>
                         <p>Connect your Salesforce account</p>
-                        <button class="btn btn-outline" style="margin-top: 10px;">Connect</button>
+                        <button class="btn btn-outline salesforce-connect-btn" style="margin-top: 10px;">Connect</button>
                     </div>
                 </div>
                 
@@ -680,12 +774,19 @@
             </div>
             
             <!-- Voice Agent Section -->
-            <div class="voice-agent-section">
+            <div class="voice-agent-section" id="voice-agent-section">
                 <h2 class="section-title"><i class="fas fa-robot"></i> AI Voice Agent Management</h2>
                 
                 <div class="agent-controls">
-                    <button class="btn btn-primary" id="start-agent"><i class="fas fa-play"></i> Start Agent</button>
-                    <button class="btn btn-outline" id="stop-agent" disabled><i class="fas fa-stop"></i> Stop Agent</button>
+                    <button class="btn btn-primary" id="start-agent-btn">
+                        <i class="fas fa-play"></i> Start Agent
+                    </button>
+                    <button class="btn btn-outline" id="stop-agent-btn" disabled>
+                        <i class="fas fa-stop"></i> Stop Agent
+                    </button>
+                    <button class="btn btn-outline" id="reset-stats-btn">
+                        <i class="fas fa-redo"></i> Reset Stats
+                    </button>
                     <div class="agent-status">
                         <div class="status-indicator inactive" id="status-indicator"></div>
                         <span id="status-text">Agent Inactive</span>
@@ -721,7 +822,7 @@
             </div>
             
             <!-- Payment Portal Section -->
-            <div class="payment-portal-section">
+            <div class="payment-portal-section" id="payment-portal-section">
                 <h2 class="section-title"><i class="fas fa-credit-card"></i> Customer Payment Portal</h2>
                 
                 <div class="invoice-list">
@@ -777,19 +878,20 @@
                         </div>
                     </div>
                     
-                    <button class="btn btn-primary" id="process-payment" style="width: 100%; margin-top: 15px;">Process Payment</button>
+                    <button class="btn btn-primary" id="process-payment-btn" style="width: 100%; margin-top: 15px;">Process Payment</button>
+                    <button class="btn btn-outline" id="cancel-payment-btn" style="width: 100%; margin-top: 10px;">Cancel</button>
                 </div>
                 
                 <div id="payment-success" style="display: none; text-align: center; padding: 20px; background-color: rgba(76, 201, 240, 0.1); border-radius: 8px;">
                     <i class="fas fa-check-circle" style="font-size: 3rem; color: var(--success); margin-bottom: 15px;"></i>
                     <h3>Payment Successful!</h3>
                     <p>Your payment of $<span id="paid-amount"></span> for invoice <span id="paid-invoice"></span> has been processed successfully.</p>
-                    <button class="btn btn-outline" id="new-payment" style="margin-top: 15px;">Make Another Payment</button>
+                    <button class="btn btn-outline" id="new-payment-btn" style="margin-top: 15px;">Make Another Payment</button>
                 </div>
             </div>
             
             <!-- Campaign Management Section -->
-            <div class="campaign-section">
+            <div class="campaign-section" id="campaign-section">
                 <h2 class="section-title"><i class="fas fa-bullhorn"></i> Campaign Management</h2>
                 
                 <div class="campaign-list">
@@ -813,8 +915,8 @@
                             </div>
                         </div>
                         <div class="campaign-actions">
-                            <button class="btn btn-outline">Pause</button>
-                            <button class="btn btn-primary">View Details</button>
+                            <button class="btn btn-outline pause-campaign-btn">Pause</button>
+                            <button class="btn btn-primary view-campaign-btn">View Details</button>
                         </div>
                     </div>
                     
@@ -838,8 +940,8 @@
                             </div>
                         </div>
                         <div class="campaign-actions">
-                            <button class="btn btn-outline">Resume</button>
-                            <button class="btn btn-primary">View Details</button>
+                            <button class="btn btn-outline resume-campaign-btn">Resume</button>
+                            <button class="btn btn-primary view-campaign-btn">View Details</button>
                         </div>
                     </div>
                     
@@ -863,8 +965,8 @@
                             </div>
                         </div>
                         <div class="campaign-actions">
-                            <button class="btn btn-outline">Duplicate</button>
-                            <button class="btn btn-primary">View Report</button>
+                            <button class="btn btn-outline duplicate-campaign-btn">Duplicate</button>
+                            <button class="btn btn-primary view-campaign-btn">View Report</button>
                         </div>
                     </div>
                 </div>
@@ -915,12 +1017,99 @@
     </footer>
 
     <script>
+        // Notification System
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            const notificationText = document.getElementById('notification-text');
+            const icon = notification.querySelector('i');
+            
+            notificationText.textContent = message;
+            notification.className = `notification ${type} show`;
+            
+            // Change icon based on type
+            if (type === 'success') {
+                icon.className = 'fas fa-check-circle';
+            } else if (type === 'error') {
+                icon.className = 'fas fa-exclamation-circle';
+            } else {
+                icon.className = 'fas fa-info-circle';
+            }
+            
+            // Auto hide after 3 seconds
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // Navigation System
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Update active nav link
+                document.querySelectorAll('.nav-link').forEach(item => {
+                    item.classList.remove('active');
+                });
+                this.classList.add('active');
+                
+                // Scroll to section
+                const sectionId = this.getAttribute('data-section');
+                let targetElement;
+                
+                if (sectionId === 'dashboard') {
+                    targetElement = document.querySelector('.dashboard');
+                } else if (sectionId === 'crm') {
+                    targetElement = document.getElementById('crm-section');
+                } else if (sectionId === 'voice') {
+                    targetElement = document.getElementById('voice-agent-section');
+                } else if (sectionId === 'payment') {
+                    targetElement = document.getElementById('payment-portal-section');
+                } else if (sectionId === 'campaigns') {
+                    targetElement = document.getElementById('campaign-section');
+                } else {
+                    targetElement = document.querySelector('.dashboard');
+                }
+                
+                if (targetElement) {
+                    window.scrollTo({
+                        top: targetElement.offsetTop - 100,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+
+        // Feature Card Buttons
+        document.querySelector('.configure-crm-btn').addEventListener('click', function() {
+            document.querySelector('.nav-link[data-section="crm"]').click();
+            showNotification('Navigated to CRM Integrations', 'info');
+        });
+        
+        document.querySelector('.manage-agents-btn').addEventListener('click', function() {
+            document.querySelector('.nav-link[data-section="voice"]').click();
+            showNotification('Navigated to Voice Agent Management', 'info');
+        });
+        
+        document.querySelector('.view-portal-btn').addEventListener('click', function() {
+            document.querySelector('.nav-link[data-section="payment"]').click();
+            showNotification('Navigated to Payment Portal', 'info');
+        });
+
+        // New Campaign Button
+        document.getElementById('new-campaign-btn').addEventListener('click', function() {
+            showNotification('Creating new campaign... Redirecting to campaign setup.', 'info');
+            // In a real app, this would redirect to campaign creation page
+            setTimeout(() => {
+                document.querySelector('.nav-link[data-section="campaigns"]').click();
+            }, 1000);
+        });
+
         // CRM Integration Functionality
-        document.getElementById('hubspot-connect').addEventListener('click', function() {
+        document.querySelector('.hubspot-connect-btn').addEventListener('click', function() {
             connectCRM('HubSpot');
         });
         
-        document.getElementById('salesforce-connect').addEventListener('click', function() {
+        document.querySelector('.salesforce-connect-btn').addEventListener('click', function() {
             connectCRM('Salesforce');
         });
         
@@ -950,6 +1139,8 @@
                     disconnectCRM(crm, this.closest('.invoice-item'));
                 });
             });
+            
+            showNotification(`${crmName} integration connected successfully!`, 'success');
         }
         
         function disconnectCRM(crmName, element) {
@@ -960,8 +1151,10 @@
                 document.getElementById('no-accounts-msg').style.display = 'block';
                 document.getElementById('connected-accounts-list').style.display = 'none';
             }
+            
+            showNotification(`${crmName} integration disconnected.`, 'info');
         }
-        
+
         // Voice Agent Functionality
         let callCount = 0;
         let successfulCalls = 0;
@@ -969,31 +1162,50 @@
         let agentActive = false;
         let callInterval;
         
-        document.getElementById('start-agent').addEventListener('click', function() {
+        document.getElementById('start-agent-btn').addEventListener('click', function() {
             agentActive = true;
             document.getElementById('status-indicator').classList.remove('inactive');
-            document.getElementById('status-indicator').classList.add('active');
             document.getElementById('status-text').textContent = 'Agent Active';
-            document.getElementById('start-agent').disabled = true;
-            document.getElementById('stop-agent').disabled = false;
+            document.getElementById('start-agent-btn').disabled = true;
+            document.getElementById('stop-agent-btn').disabled = false;
             
             // Start simulated calls
             callInterval = setInterval(simulateCall, 3000);
             
             document.getElementById('no-calls-msg').style.display = 'none';
             document.getElementById('call-log').style.display = 'block';
+            
+            showNotification('AI Voice Agent started successfully!', 'success');
         });
         
-        document.getElementById('stop-agent').addEventListener('click', function() {
+        document.getElementById('stop-agent-btn').addEventListener('click', function() {
             agentActive = false;
-            document.getElementById('status-indicator').classList.remove('active');
             document.getElementById('status-indicator').classList.add('inactive');
             document.getElementById('status-text').textContent = 'Agent Inactive';
-            document.getElementById('start-agent').disabled = false;
-            document.getElementById('stop-agent').disabled = true;
+            document.getElementById('start-agent-btn').disabled = false;
+            document.getElementById('stop-agent-btn').disabled = true;
             
             // Stop simulated calls
             clearInterval(callInterval);
+            
+            showNotification('AI Voice Agent stopped.', 'info');
+        });
+        
+        document.getElementById('reset-stats-btn').addEventListener('click', function() {
+            callCount = 0;
+            successfulCalls = 0;
+            paymentLinksSent = 0;
+            
+            document.getElementById('total-calls').textContent = callCount;
+            document.getElementById('successful-calls').textContent = successfulCalls;
+            document.getElementById('payment-links-sent').textContent = paymentLinksSent;
+            document.getElementById('conversion-rate').textContent = '0%';
+            
+            document.getElementById('call-log').innerHTML = '';
+            document.getElementById('no-calls-msg').style.display = 'block';
+            document.getElementById('call-log').style.display = 'none';
+            
+            showNotification('Call statistics reset successfully.', 'success');
         });
         
         function simulateCall() {
@@ -1037,7 +1249,7 @@
             
             callLog.innerHTML = callHTML + callLog.innerHTML;
         }
-        
+
         // Payment Portal Functionality
         document.querySelectorAll('.pay-invoice-btn').forEach(button => {
             button.addEventListener('click', function() {
@@ -1052,14 +1264,20 @@
             });
         });
         
-        document.getElementById('process-payment').addEventListener('click', function() {
+        document.getElementById('process-payment-btn').addEventListener('click', function() {
             const cardName = document.getElementById('card-name').value;
             const cardNumber = document.getElementById('card-number').value;
             const expiryDate = document.getElementById('expiry-date').value;
             const cvv = document.getElementById('cvv').value;
             
             if (!cardName || !cardNumber || !expiryDate || !cvv) {
-                alert('Please fill in all payment details');
+                showNotification('Please fill in all payment details', 'error');
+                return;
+            }
+            
+            // Validate card number (simple check for demo)
+            if (cardNumber.replace(/\s/g, '').length !== 16) {
+                showNotification('Please enter a valid 16-digit card number', 'error');
                 return;
             }
             
@@ -1072,9 +1290,24 @@
             
             document.getElementById('paid-amount').textContent = paidAmount;
             document.getElementById('paid-invoice').textContent = paidInvoice;
+            
+            showNotification(`Payment of $${paidAmount} processed successfully!`, 'success');
         });
         
-        document.getElementById('new-payment').addEventListener('click', function() {
+        document.getElementById('cancel-payment-btn').addEventListener('click', function() {
+            document.getElementById('payment-form').style.display = 'none';
+            document.querySelector('.invoice-list').style.display = 'block';
+            
+            // Reset form
+            document.getElementById('card-name').value = '';
+            document.getElementById('card-number').value = '';
+            document.getElementById('expiry-date').value = '';
+            document.getElementById('cvv').value = '';
+            
+            showNotification('Payment cancelled', 'info');
+        });
+        
+        document.getElementById('new-payment-btn').addEventListener('click', function() {
             document.getElementById('payment-success').style.display = 'none';
             document.querySelector('.invoice-list').style.display = 'block';
             
@@ -1083,6 +1316,88 @@
             document.getElementById('card-number').value = '';
             document.getElementById('expiry-date').value = '';
             document.getElementById('cvv').value = '';
+        });
+
+        // Campaign Management Functionality
+        document.querySelectorAll('.pause-campaign-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const campaignCard = this.closest('.campaign-card');
+                const statusElement = campaignCard.querySelector('.campaign-status');
+                const pauseBtn = campaignCard.querySelector('.pause-campaign-btn');
+                
+                statusElement.textContent = 'Paused';
+                statusElement.className = 'campaign-status status-pending';
+                pauseBtn.textContent = 'Resume';
+                pauseBtn.classList.remove('pause-campaign-btn');
+                pauseBtn.classList.add('resume-campaign-btn');
+                
+                // Update event listener
+                pauseBtn.addEventListener('click', resumeCampaign);
+                
+                showNotification('Campaign paused successfully', 'info');
+            });
+        });
+        
+        document.querySelectorAll('.resume-campaign-btn').forEach(button => {
+            button.addEventListener('click', resumeCampaign);
+        });
+        
+        function resumeCampaign() {
+            const campaignCard = this.closest('.campaign-card');
+            const statusElement = campaignCard.querySelector('.campaign-status');
+            const resumeBtn = campaignCard.querySelector('.resume-campaign-btn');
+            
+            statusElement.textContent = 'Active';
+            statusElement.className = 'campaign-status status-overdue';
+            resumeBtn.textContent = 'Pause';
+            resumeBtn.classList.remove('resume-campaign-btn');
+            resumeBtn.classList.add('pause-campaign-btn');
+            
+            // Update event listener
+            resumeBtn.addEventListener('click', function() {
+                const campaignCard = this.closest('.campaign-card');
+                const statusElement = campaignCard.querySelector('.campaign-status');
+                const pauseBtn = campaignCard.querySelector('.pause-campaign-btn');
+                
+                statusElement.textContent = 'Paused';
+                statusElement.className = 'campaign-status status-pending';
+                pauseBtn.textContent = 'Resume';
+                pauseBtn.classList.remove('pause-campaign-btn');
+                pauseBtn.classList.add('resume-campaign-btn');
+                
+                // Update event listener
+                pauseBtn.addEventListener('click', resumeCampaign);
+                
+                showNotification('Campaign paused successfully', 'info');
+            });
+            
+            showNotification('Campaign resumed successfully', 'success');
+        }
+        
+        document.querySelectorAll('.duplicate-campaign-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                showNotification('Campaign duplicated successfully', 'success');
+            });
+        });
+        
+        document.querySelectorAll('.view-campaign-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                showNotification('Opening campaign details...', 'info');
+            });
+        });
+
+        // Settings and Notifications Buttons
+        document.getElementById('settings-btn').addEventListener('click', function() {
+            showNotification('Opening settings...', 'info');
+        });
+        
+        document.getElementById('notifications-btn').addEventListener('click', function() {
+            showNotification('You have 3 unread notifications', 'info');
+        });
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            showNotification('PayFlow AI Dashboard loaded successfully!', 'success');
         });
     </script>
 </body>
